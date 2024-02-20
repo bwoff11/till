@@ -72,30 +72,8 @@ pub struct ResourceRecord {
 #[derive(Debug, Clone)]
 pub struct DomainName(Vec<String>);
 
-impl DomainName {
-    pub fn new(parts: Vec<String>) -> Self {
-        DomainName(parts)
-    }
-
-    /// Returns a single string representation of the domain name.
-    pub fn to_string(&self) -> String {
-        self.0.join(".")
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct RecordData(Vec<u8>);
-
-impl RecordData {
-    pub fn new(data: Vec<u8>) -> Self {
-        RecordData(data)
-    }
-
-    /// Returns a hexadecimal string representation of the record data.
-    pub fn to_hex_string(&self) -> String {
-        self.0.iter().map(|byte| format!("{:02X}", byte)).collect::<Vec<String>>().join(" ")
-    }
-}
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum RecordType {
@@ -491,28 +469,44 @@ impl fmt::Display for ResponseCode {
     }
 }
 
+impl DomainName {
+    pub fn new(parts: Vec<String>) -> Self {
+        DomainName(parts)
+    }
+
+    pub fn to_string(&self) -> String {
+        self.0.join(".")
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<String> {
+        self.0.iter()
+    }
+}
+
 impl fmt::Display for DomainName {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
 
-impl fmt::Display for RecordData {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_hex_string())
-    }
-}
-
-impl DomainName {
-    // Method to get an iterator over the domain name labels
-    pub fn iter(&self) -> std::slice::Iter<String> {
-        self.0.iter()
-    }
-}
-
 impl RecordData {
-    // Method to access the internal Vec<u8> directly
+    pub fn new(data: Vec<u8>) -> Self {
+        RecordData(data)
+    }
+
+    pub fn to_utf8_string(&self) -> Result<String, std::string::FromUtf8Error> {
+        String::from_utf8(self.0.clone())
+    }
+
     pub fn as_slice(&self) -> &[u8] {
         &self.0
+    }
+}
+
+impl fmt::Display for RecordData {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Join the byte values into a comma-separated string
+        let byte_strings = self.0.iter().map(|byte| byte.to_string()).collect::<Vec<String>>().join(", ");
+        write!(f, "[{}]", byte_strings)
     }
 }
