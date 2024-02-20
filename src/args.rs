@@ -44,7 +44,7 @@ pub struct Args {
         help = "Output format to use.",
         short = 'o',
         long = "output",
-        default_value = "inlined"
+        default_value = "inline"
     )]
     output: Output,
 }
@@ -109,7 +109,7 @@ enum Transport {
 
 #[derive(ValueEnum, Debug, Clone)]
 enum Output {
-    Inlined,
+    Inline,
     Json,
     Yaml,
 }

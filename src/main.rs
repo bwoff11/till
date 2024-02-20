@@ -1,20 +1,15 @@
 use clap::Parser;
-use hickory_client::client::{Client, SyncClient};
-use hickory_client::op::DnsResponse;
-use hickory_client::rr::{DNSClass, RecordType};
-use hickory_client::udp::UdpClientConnection;
-
 use args::Args;
+use client::Client;
 
 mod display;
 mod args;
+mod client;
 
 fn main() {
     let args = Args::parse();
+    let client = Client::new(&args);
+    let resp = client.query();
 
-    let conn = UdpClientConnection::new(args.socket_addr()).unwrap();
-    let client = SyncClient::new(conn);
-    let response: DnsResponse = client.query(&args.name(), DNSClass::IN, RecordType::A).unwrap();
-
-    display::Display::new(&response).print_as_json();
+    display::Display::new(&resp).print_as_json();
 }
