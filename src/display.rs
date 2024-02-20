@@ -12,7 +12,19 @@ impl<'a> Display<'a> {
         }
     }
 
-    pub fn print(&self) {
+    pub fn print_inlined(&self) {
+        for answer in self.answers {
+            println!("{}", answer);
+        }
+    }
+
+    pub fn print_as_json(&self) {
+        for answer in self.answers {
+            println!("{:#?}", answer);
+        }
+    }
+
+    pub fn print_as_yaml(&self) {
         for answer in self.answers {
             println!("{:?}", answer);
         }
