@@ -1,4 +1,5 @@
 use rand::Rng;
+use std::fmt;
 
 #[derive(Debug)]
 pub struct Message {
@@ -16,58 +17,58 @@ pub struct Message {
     pub extra: Vec<ResourceRecord>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct MessageHeader {
     /// Assigned by the program that generates any kind of query.
     /// This identifier is copied into the response.
-    id: u16,
+    pub id: u16,
     /// Specifies whether this message is a query (0) or a response (1).
-    qr: u8,
+    pub qr: u8,
     /// Specifies the kind of query in this message. 0 represents a standard query (QUERY).
-    opcode: u8,
+    pub opcode: u8,
     /// Authoritative Answer - set in responses to indicate that the responding server is an authority for the domain.
-    aa: u8,
+    pub aa: u8,
     /// Truncation - indicates that this message was truncated.
-    tc: u8,
+    pub tc: u8,
     /// Recursion Desired - directs the server to pursue the query recursively.
-    rd: u8,
+    pub rd: u8,
     /// Recursion Available - set or cleared in a response to indicate recursive query support.
-    ra: u8,
+    pub ra: u8,
     /// Reserved for future use. Must be zero in all queries and responses.
-    z: u8,
+    pub z: u8,
     /// Response code - set as part of responses and indicates success or failure of the query.
-    rcode: ResponseCode,
+    pub rcode: ResponseCode,
     /// The number of entries in the question section.
-    qdcount: u16,
+    pub qdcount: u16,
     /// The number of resource records in the answer section.
-    ancount: u16,
+    pub ancount: u16,
     /// The number of name server resource records in the authority records section.
-    nscount: u16,
+    pub nscount: u16,
     /// The number of resource records in the additional records section.
-    arcount: u16,
+    pub arcount: u16,
 }
 
 #[derive(Debug, Clone)]
 pub struct Question {
     /// The domain name that is the subject of the query.
-    qname: Vec<String>,
+    pub qname: Vec<String>,
     /// Specifies the type of the query.
-    qtype: u16,
+    pub qtype: u16,
     /// Specifies the class of the query.
-    qclass: u16,
+    pub qclass: u16,
 }
 
 #[derive(Debug)]
 pub struct ResourceRecord {
-    name: Vec<String>,
-    rtype: RecordType,
-    rclass: u16,
-    ttl: u32,
-    rdlength: u16,
-    rdata: Vec<u8>,
+    pub name: Vec<String>,
+    pub rtype: RecordType,
+    pub rclass: u16,
+    pub ttl: u32,
+    pub rdlength: u16,
+    pub rdata: Vec<u8>,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum RecordType {
     A,     // = 1, RFC 1035
     AAAA,  // = 28, RFC 3596
@@ -407,6 +408,22 @@ impl RecordType {
     }
 }
 
+impl fmt::Display for RecordType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RecordType::A => write!(f, "A"),
+            RecordType::AAAA => write!(f, "AAAA"),
+            RecordType::CNAME => write!(f, "CNAME"),
+            RecordType::MX => write!(f, "MX"),
+            RecordType::NS => write!(f, "NS"),
+            RecordType::PTR => write!(f, "PTR"),
+            RecordType::SOA => write!(f, "SOA"),
+            RecordType::SRV => write!(f, "SRV"),
+            RecordType::TXT => write!(f, "TXT"),
+        }
+    }
+}
+
 impl ResponseCode {
     fn to_u8(&self) -> u8 {
         *self as u8
@@ -425,6 +442,23 @@ impl ResponseCode {
             9 => Some(ResponseCode::NOTAUTH),
             10 => Some(ResponseCode::NOTZONE),
             _ => None,
+        }
+    }
+}
+
+impl fmt::Display for ResponseCode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ResponseCode::NOERROR => write!(f, "NOERROR"),
+            ResponseCode::FORMERR => write!(f, "FORMERR"),
+            ResponseCode::SERVFAIL => write!(f, "SERVFAIL"),
+            ResponseCode::NXDOMAIN => write!(f, "NXDOMAIN"),
+            ResponseCode::NOTIMP => write!(f, "NOTIMP"),
+            ResponseCode::REFUSED => write!(f, "REFUSED"),
+            ResponseCode::YXDOMAIN => write!(f, "YXDOMAIN"),
+            ResponseCode::XRRSET => write!(f, "XRRSET"),
+            ResponseCode::NOTAUTH => write!(f, "NOTAUTH"),
+            ResponseCode::NOTZONE => write!(f, "NOTZONE"),
         }
     }
 }
