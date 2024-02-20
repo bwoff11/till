@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = { version = "4.5.1", features = ["cargo"] }
+clap = { version = "4.5.1", features = ["cargo", "derive"] }
 regex = "1.5.4"
 rand = "0.8.4"
 tokio = { version = "1", features = ["full"] }
 tabled = "0.15.0"
+hickory-client = "0.24.0"

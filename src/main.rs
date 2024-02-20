@@ -1,55 +1,62 @@
-use tokio::net::UdpSocket;
-use dns::Message as DNSMessage;
-use output::Output;
-use clap::{arg, Command};
+use clap::Parser;
+use hickory_client::client::{Client, SyncClient};
+use hickory_client::op::DnsResponse;
+use hickory_client::rr::{DNSClass, Name, RData, Record, RecordType};
+use hickory_client::udp::UdpClientConnection;
+use std::net::Ipv4Addr;
+use std::str::FromStr;
 
-mod dns;
-mod output;
+mod display;
 
-#[tokio::main]
-async fn main() {
-    let cmd = Command::new("till")
-        .bin_name("till")
-        .version("0.1.0")
-        .about("DNS client utility")
-        .author("Brandon Wofford")
-        .arg(arg!([domain] "The domain name to query").required(true))
-        .arg(arg!(-t --type [TYPE] "The type of query to perform")
-            .default_value("A"))
-        .arg(arg!(-s --server [SERVER] "The DNS server to query")
-            .default_value("127.0.0.1"))
-        .arg(arg!(-p --port [PORT] "The port to send the query to")
-            .default_value("53"));
+#[derive(Parser, Debug)]
+#[command(
+    version = "0.1.0",
+    author = "Brandon Wofford",
+    about = "DNS query tool.",
+    long_about = "Till is a DNS query tool. It sends a query to a DNS server and prints the response."
+)]
+struct Args {
+    #[arg(required = true, help = "Query to send.")]
+    query: String,
+    #[arg(
+        help = "Server to send the query to.",
+        short = 's',
+        long = "server",
+        default_value = "8.8.8.8"
+    )]
+    server: String,
+    #[arg(
+        help = "Port to send the query to.",
+        short = 'p',
+        long = "port",
+        default_value = "53"
+    )]
+    port: u16,
+    #[arg(
+        help = "Record type of the query.",
+        short = 'r',
+        long = "record",
+        default_value = "A"
+    )]
+    record: String,
+    #[arg(
+        help = "Transport protocol to use.",
+        short = 't',
+        long = "transport",
+        default_value = "udp"
+    )]
+    transport: String,
+}
 
-    let matches = cmd.get_matches();
+fn main() {
+    let args = Args::parse();
 
-    if let Some(domain_str) = matches.get_one::<String>("domain") {
-        match DNSMessage::new(domain_str) {
-            Ok(msg) => {
-                let data = msg.serialize();
-                // Assuming "data" is a Vec<u8> or similar
-                
-                let server_address = "10.0.0.27:53";
-                
-                // Bind to any address to send data
-                let socket = UdpSocket::bind("0.0.0.0:0").await.expect("couldn't bind to address");
-                
-                // Send the serialized message
-                socket.send_to(&data, server_address).await.expect("couldn't send data");
-                
-                let mut buf = [0u8; 4096]; // Buffer for the response
-                let (amt, _) = socket.recv_from(&mut buf).await.expect("didn't receive data");
-                
-                // Handle the response here...
-                let response = DNSMessage::deserialize(&buf[..amt]).unwrap();
+    let address = format!("{}:{}", args.server, args.port).parse().unwrap();
+    let name = Name::from_str(&args.query).unwrap();
 
-                let output = Output::new(response);
-                output.print();
+    let conn = UdpClientConnection::new(address).unwrap();
+    let client = SyncClient::new(conn);
+    let response: DnsResponse = client.query(&name, DNSClass::IN, RecordType::A).unwrap();
 
-            },
-            Err(e) => {
-                eprintln!("Error creating DNSMessage: {}", e);
-            },
-        }
-    }
+    display::Display::new(&response).print();
 }
