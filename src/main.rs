@@ -1,8 +1,10 @@
 use tokio::net::UdpSocket;
 use dns::Message as DNSMessage;
+use output::Output;
 use clap::{arg, Command};
 
 mod dns;
+mod output;
 
 #[tokio::main]
 async fn main() {
@@ -10,7 +12,14 @@ async fn main() {
         .bin_name("till")
         .version("0.1.0")
         .about("DNS client utility")
-        .arg(arg!([domain] "The domain name to query").required(true));
+        .author("Brandon Wofford")
+        .arg(arg!([domain] "The domain name to query").required(true))
+        .arg(arg!(-t --type [TYPE] "The type of query to perform")
+            .default_value("A"))
+        .arg(arg!(-s --server [SERVER] "The DNS server to query")
+            .default_value("127.0.0.1"))
+        .arg(arg!(-p --port [PORT] "The port to send the query to")
+            .default_value("53"));
 
     let matches = cmd.get_matches();
 
@@ -32,9 +41,11 @@ async fn main() {
                 let (amt, _) = socket.recv_from(&mut buf).await.expect("didn't receive data");
                 
                 // Handle the response here...
-                println!("Received {} bytes: {:?}", amt, &buf[..amt]);
-                let response = DNSMessage::deserialize(&buf[..amt]);
-                println!("Response: {:?}", response);
+                let response = DNSMessage::deserialize(&buf[..amt]).unwrap();
+
+                let output = Output::new(response);
+                output.print();
+
             },
             Err(e) => {
                 eprintln!("Error creating DNSMessage: {}", e);

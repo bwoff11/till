@@ -3,21 +3,21 @@ use rand::Rng;
 #[derive(Debug)]
 pub struct Message {
     /// The header section of the message.
-    header: MessageHeader,
+    pub header: MessageHeader,
     /// A flag indicating whether domain name compression is used in the message.
     compress: bool,
     /// Questions are queries the client has for the server.
-    question: Vec<Question>,
+    pub question: Vec<Question>,
     /// Answers are responses from the server to the client's questions.
-    answer: Vec<ResourceRecord>,
+    pub answer: Vec<ResourceRecord>,
     /// Authority records are the servers that are authoritative for the domain in the question section.
-    authority: Vec<ResourceRecord>,
+    pub authority: Vec<ResourceRecord>,
     /// Additional records contain extra information that may be helpful in processing the response.
-    extra: Vec<ResourceRecord>,
+    pub extra: Vec<ResourceRecord>,
 }
 
 #[derive(Debug)]
-struct MessageHeader {
+pub struct MessageHeader {
     /// Assigned by the program that generates any kind of query.
     /// This identifier is copied into the response.
     id: u16,
@@ -48,7 +48,7 @@ struct MessageHeader {
 }
 
 #[derive(Debug, Clone)]
-struct Question {
+pub struct Question {
     /// The domain name that is the subject of the query.
     qname: Vec<String>,
     /// Specifies the type of the query.
