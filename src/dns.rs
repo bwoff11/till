@@ -1,5 +1,6 @@
 use rand::Rng;
 use std::fmt;
+use tabled::Tabled;
 
 #[derive(Debug)]
 pub struct Message {
@@ -17,7 +18,7 @@ pub struct Message {
     pub extra: Vec<ResourceRecord>,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Tabled, Debug, Copy, Clone)]
 pub struct MessageHeader {
     /// Assigned by the program that generates any kind of query.
     /// This identifier is copied into the response.
@@ -58,14 +59,42 @@ pub struct Question {
     pub qclass: u16,
 }
 
-#[derive(Debug)]
+#[derive(Tabled, Debug)]
 pub struct ResourceRecord {
-    pub name: Vec<String>,
+    pub name: DomainName,
     pub rtype: RecordType,
     pub rclass: u16,
     pub ttl: u32,
     pub rdlength: u16,
-    pub rdata: Vec<u8>,
+    pub rdata: RecordData,
+}
+
+#[derive(Debug, Clone)]
+pub struct DomainName(Vec<String>);
+
+impl DomainName {
+    pub fn new(parts: Vec<String>) -> Self {
+        DomainName(parts)
+    }
+
+    /// Returns a single string representation of the domain name.
+    pub fn to_string(&self) -> String {
+        self.0.join(".")
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RecordData(Vec<u8>);
+
+impl RecordData {
+    pub fn new(data: Vec<u8>) -> Self {
+        RecordData(data)
+    }
+
+    /// Returns a hexadecimal string representation of the record data.
+    pub fn to_hex_string(&self) -> String {
+        self.0.iter().map(|byte| format!("{:02X}", byte)).collect::<Vec<String>>().join(" ")
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -331,10 +360,10 @@ impl ResourceRecord {
     fn serialize(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 
-        // Serialize the NAME (qname in your structure)
-        for label in &self.name {
-            bytes.push(label.len() as u8);
-            bytes.extend_from_slice(label.as_bytes());
+        // Serialize the NAME
+        for label in self.name.iter() { // Use the iter() method to access labels
+            bytes.push(label.len() as u8); // Length of label
+            bytes.extend_from_slice(label.as_bytes()); // Label itself
         }
         bytes.push(0); // End of name
 
@@ -343,9 +372,8 @@ impl ResourceRecord {
         bytes.extend_from_slice(&self.rclass.to_be_bytes());
         bytes.extend_from_slice(&self.ttl.to_be_bytes());
         // For RDLENGTH and RDATA, ensure you have the correct length and data
-        // Here we assume rdata is already the correct length and rdlength is set correctly
         bytes.extend_from_slice(&self.rdlength.to_be_bytes());
-        bytes.extend_from_slice(&self.rdata.as_slice());
+        bytes.extend_from_slice(self.rdata.as_slice()); // Use as_slice() to access rdata
 
         bytes
     }
@@ -377,12 +405,12 @@ impl ResourceRecord {
         offset += rdlength as usize;
         
         Ok((ResourceRecord {
-            name,
+            name: DomainName::new(name),
             rtype,
             rclass,
             ttl,
             rdlength,
-            rdata,
+            rdata: RecordData::new(rdata),
         }, offset))
     }
 }
@@ -460,5 +488,31 @@ impl fmt::Display for ResponseCode {
             ResponseCode::NOTAUTH => write!(f, "NOTAUTH"),
             ResponseCode::NOTZONE => write!(f, "NOTZONE"),
         }
+    }
+}
+
+impl fmt::Display for DomainName {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl fmt::Display for RecordData {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_hex_string())
+    }
+}
+
+impl DomainName {
+    // Method to get an iterator over the domain name labels
+    pub fn iter(&self) -> std::slice::Iter<String> {
+        self.0.iter()
+    }
+}
+
+impl RecordData {
+    // Method to access the internal Vec<u8> directly
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
     }
 }
