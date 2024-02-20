@@ -1,27 +1,25 @@
 use clap::arg;
 use clap::Command;
-use target::{Target, TargetType};
+use dns_query::DNSQuery;
 
-mod target;
+mod dns_query;
 
 fn main() {
     let cmd = Command::new("till")
         .bin_name("till")
         .version("0.1.0")
         .about("DNS client utility")
-        .arg(arg!([host] "The host to connect to")
-            .required(true))
-        .arg(arg!([port] "The port to connect to")
-            .required(false)
-            .default_value("53"));
+        .arg(arg!([domain] "The domain name to query")
+            .required(true));
 
     let matches = cmd.get_matches();
 
-    if let Some(host_str) = matches.get_one::<String>("host") {
-        match Target::new(host_str) {
+    // Make sure to use "domain" when retrieving the match
+    if let Some(domain_str) = matches.get_one::<String>("domain") {
+        match DNSQuery::new(domain_str) {
             Ok(target) => {
-                println!("Host is valid: {:?}", target);
-                // proceed here
+                println!("Domain is valid: {:?}", target);
+                // Proceed with DNS query logic here
             },
             Err(e) => eprintln!("Error: {}", e),
         }
