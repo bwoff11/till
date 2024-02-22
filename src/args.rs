@@ -46,7 +46,7 @@ pub struct Args {
         long = "output",
         default_value = "inline"
     )]
-    output: Output,
+    pub output: Output,
 }
 
 impl Args {
@@ -108,8 +108,9 @@ enum Transport {
 }
 
 #[derive(ValueEnum, Debug, Clone)]
-enum Output {
+pub enum Output {
     Inline,
     Json,
     Yaml,
+    Table,
 }

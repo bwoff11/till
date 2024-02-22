@@ -13,9 +13,6 @@ impl<'a> Client<'a> {
     }
 
     pub fn query(&self) -> DnsResponse {
-        let conn = UdpClientConnection::new(self.args.socket_addr()).unwrap();
-        let client = HSyncClient::new(conn);
-        let response: DnsResponse = client.query(&self.args.name(), DNSClass::IN, RecordType::A).unwrap();
         response
     }
 }
