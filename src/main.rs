@@ -14,11 +14,13 @@ fn main() {
 
     let conn = UdpClientConnection::new(args.socket_addr()).unwrap();
     let client = HSyncClient::new(conn);
+    let start = std::time::Instant::now();
     let response: DnsResponse = client
         .query(&args.name(), DNSClass::IN, RecordType::A)
         .unwrap();
+    let rtt = start.elapsed().as_millis();
 
-    let display = display::Display::new(&response);
+    let display = display::Display::new(&args, &response, rtt);
 
     match args.output {
         Output::Json => display.print_as_json(),

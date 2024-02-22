@@ -1,15 +1,30 @@
+use crate::args::Args;
 use hickory_client::op::DnsResponse;
+use chrono::Local;
 
 pub struct Display<'a> {
+    args: &'a Args,
     message: &'a DnsResponse,
+    rtt: u128,
 }
 
 impl<'a> Display<'a> {
-    pub fn new(response: &'a DnsResponse) -> Self {
-        Display { message: response }
+    pub fn new(args: &'a Args, response: &'a DnsResponse, rtt: u128) -> Display<'a> {
+        Display {
+            args: args,
+            message: response,
+            rtt: rtt,
+        }
     }
 
     pub fn print_as_inline(&self) {
+        println!("INFO: SERVER: {}, RTT: {} ms, WHEN: {:?}", 
+            self.args.server(), 
+            self.rtt,
+            Local::now()
+        );
+
+
         println!(
             "HEADER: ID: {}, QR: {}, OpCode: {}, AA: {}, TC: {}, RD: {}, RA: {}, RCODE: {}, QDCOUNT: {}, ANCOUNT: {}, NSCOUNT: {}, ARCOUNT: {}",
             self.message.header().id(),
@@ -37,7 +52,7 @@ impl<'a> Display<'a> {
 
         for answer in self.message.answers() {
             let data_string = match answer.data() {
-                Some(rdata) => rdata.to_string(), // You need to implement or use a method that works for RData
+                Some(rdata) => rdata.to_string(),
                 None => "No data".to_string(),
             };
             println!(

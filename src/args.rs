@@ -6,7 +6,7 @@ use std::str::FromStr;
 #[command(
     version = "0.1.0",
     author = "Brandon Wofford",
-    about = "DNS query tool.",
+    about = "DNS query utility.",
     long_about = "Till is a DNS query tool. It sends a query to a DNS server and prints the response."
 )]
 pub struct Args {
@@ -58,6 +58,10 @@ impl Args {
         format!("{}:{}", self.server, self.port)
             .parse()
             .expect("Failed to parse socket address.")
+    }
+
+    pub fn server(&self) -> &str {
+        &self.server
     }
 }
 
